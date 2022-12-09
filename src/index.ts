@@ -1,11 +1,10 @@
 import express, { Request, Response } from "express";
-import { Sequelize } from "sequelize";
 // import cookieParser from "cookie-parser";
 
 import dotenv from "dotenv";
 import sequelizeConnection from "./config/dbConnect";
 
-// import router from "./routes/Routes";
+import router from "./routes/Routes";
 
 dotenv.config();
 
@@ -29,7 +28,7 @@ app.get("/", (req: Request, res: Response) => {
     }
 })()
 
-// app.use(router);
+app.use(router);
 
 app.listen(process.env.APP_PORT, () => {
     console.log((`${process.env.APP_NAME} running on port ${process.env.APP_PORT}`))
