@@ -17,7 +17,7 @@ const CreateMenuValidation = (req: Request, res: Response, next: NextFunction) =
 		const rules: Validator.Rules = {
 			"name": "required|string|max:50",
 			"icon": "required|string",
-			"oradering": "required|numeric",
+			"ordering": "required|numeric",
 		};
 
 		const validate = new Validator(data, rules);
@@ -45,8 +45,8 @@ const CreateSubmenuValidation = async(req: Request, res: Response, next: NextFun
 			"url": "required|string",
 			"title": "required|string|max:50",
 			"icon": "required|string",
-			"oradering": "required|numer",
-			"isTargetSelf": "required|bicoolean"
+			"ordering": "required|numeric",
+			"isTargetSelf": "required|boolean"
 		};
 
 		const validate = new Validator(data, rules);
@@ -54,7 +54,7 @@ const CreateSubmenuValidation = async(req: Request, res: Response, next: NextFun
 		if (validate.fails()) {
 			return res.status(400).send(Helpers.ResponseData(400, "Bad Request", validate.errors, null));
 		}
-
+		
 		const menu = await MasterMenu.findOne({
 			where: {
 				id: masterMenuId,

@@ -29,26 +29,26 @@ router.get("/user/logout", Authorization.Authenticated, UserController.UserLogou
 // Master Menu Router
 router.post("/menu", MenuValidation.CreateMenuValidation, Authorization.Authenticated, Authorization.AdminRole, MasterMenuController.CreateMenu);
 router.get("/menu", Authorization.Authenticated, Authorization.AdminRole, MasterMenuController.GetListMenu);
-router.get("/menu/get/all", Authorization.Authenticated, Authorization.SuperUser, MasterMenuController.GetAllMenu);
+router.get("/menu/get/all", Authorization.Authenticated, Authorization.AdminRole, MasterMenuController.GetAllMenu);
 router.get("/menu/:id", Authorization.Authenticated, Authorization.AdminRole, MasterMenuController.GetDetailMenu);
 router.patch("/menu/:id", MenuValidation.CreateMenuValidation, Authorization.Authenticated, Authorization.AdminRole, MasterMenuController.UpdateMenu);
 router.delete("/menu/:id", Authorization.Authenticated, Authorization.AdminRole, MasterMenuController.SoftDeleteMenu);
-router.delete("/menu/permanent/:id", Authorization.Authenticated, Authorization.SuperUser, MasterMenuController.DeletePermanent);
+router.delete("/menu/permanent/:id", Authorization.Authenticated, Authorization.AdminRole, MasterMenuController.DeletePermanent);
 
 // Submenu router
 router.post("/sub-menu", MenuValidation.CreateSubmenuValidation, Authorization.Authenticated, Authorization.AdminRole, SubmenuController.CreateSubmenu);
 router.get("/sub-menu", Authorization.Authenticated, Authorization.AdminRole, SubmenuController.GetListSubmenu);
-router.get("/sub-menu/get/all", Authorization.Authenticated, Authorization.SuperUser, SubmenuController.GetAllSubmenu);
+router.get("/sub-menu/get/all", Authorization.Authenticated, Authorization.AdminRole, SubmenuController.GetAllSubmenu);
 router.get("/sub-menu/:id", Authorization.Authenticated, Authorization.AdminRole, SubmenuController.GetDetailSubmenu);
 router.patch("/sub-menu/:id", MenuValidation.CreateSubmenuValidation, Authorization.Authenticated, Authorization.AdminRole, SubmenuController.UpdateSubmenu);
 router.delete("/sub-menu/:id", Authorization.Authenticated, Authorization.AdminRole, SubmenuController.SoftDelete);
-router.delete("/sub-menu/permanent/:id", Authorization.Authenticated, Authorization.SuperUser, SubmenuController.DeletePermanent);
+router.delete("/sub-menu/permanent/:id", Authorization.Authenticated, Authorization.AdminRole, SubmenuController.DeletePermanent);
 
 // Role Menu Access router
-router.post("/role-menu-access", MenuValidation.CreateRoleMenuAccess , Authorization.Authenticated, Authorization.SuperUser, RoleMenuAccessController.CreateAccess);
-router.get("/role-menu-access", Authorization.Authenticated, Authorization.SuperUser, RoleMenuAccessController.GetList);
-router.get("/role-menu-access/get/all", Authorization.Authenticated, Authorization.SuperUser, RoleMenuAccessController.GetAll);
-router.get("/role-menu-access/:id", Authorization.Authenticated, Authorization.SuperUser, RoleMenuAccessController.GetDetail);
-router.patch("/role-menu-access/:id", MenuValidation.CreateRoleMenuAccess, Authorization.Authenticated, Authorization.SuperUser, RoleMenuAccessController.UpdateAccess);
-router.delete("/role-menu-access/:id", Authorization.Authenticated, Authorization.SuperUser, RoleMenuAccessController.SoftDelete);
+router.post("/role-menu-access", MenuValidation.CreateRoleMenuAccess , Authorization.Authenticated, Authorization.AdminRole, RoleMenuAccessController.CreateAccess);
+router.get("/role-menu-access", Authorization.Authenticated, Authorization.AdminRole, RoleMenuAccessController.GetList);
+router.get("/role-menu-access/get/all", Authorization.Authenticated, Authorization.AdminRole, RoleMenuAccessController.GetAll);
+router.get("/role-menu-access/:id", Authorization.Authenticated, Authorization.AdminRole, RoleMenuAccessController.GetDetail);
+router.patch("/role-menu-access/:id", MenuValidation.CreateRoleMenuAccess, Authorization.Authenticated, Authorization.AdminRole, RoleMenuAccessController.UpdateAccess);
+router.delete("/role-menu-access/:id", Authorization.Authenticated, Authorization.AdminRole, RoleMenuAccessController.SoftDelete);
 export default router;

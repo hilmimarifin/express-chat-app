@@ -13,18 +13,24 @@ const Authenticated = (req: Request, res: Response, next: NextFunction) => {
         if (!result) {
 			return res.status(401).send(Helper.ResponseData(401, "Unautorized", null, null));
 		}
+		console.log('extracted token', result);
+		
         res.locals.userEmail = result?.email;
+		res.locals.roleId = result?.roleId;
 		next();
 
 	} catch (err:any) {
 		return res.status(500).send(Helper.ResponseData(500, "", err, null));
 	}
 }
+const SUPER_USER = 1
+const ADMIN = 2
+const BASIC_USER = 3
 
 const SuperUser = (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const roleId = res.locals.roleId;
-		if (roleId !== 1) {
+		if (roleId !== SUPER_USER) {
 			return res.status(401).send(Helper.ResponseData(403, "Forbidden", null, null));
 		}
 
@@ -37,7 +43,7 @@ const SuperUser = (req: Request, res: Response, next: NextFunction) => {
 const AdminRole = (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const roleId = res.locals.roleId;
-		if (roleId !== 2) {
+		if (roleId !== ADMIN && roleId !== SUPER_USER) {
 			return res.status(401).send(Helper.ResponseData(403, "Forbidden", null, null));
 		}
 
@@ -50,7 +56,7 @@ const AdminRole = (req: Request, res: Response, next: NextFunction) => {
 const BasicUser = (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const roleId = res.locals.roleId;
-		if (roleId !== 3) {
+		if (roleId !== BASIC_USER && roleId !== SUPER_USER && roleId !== ADMIN) {
 			return res.status(401).send(Helper.ResponseData(403, "Forbidden", null, null));
 		}
 
