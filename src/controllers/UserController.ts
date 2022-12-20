@@ -8,6 +8,7 @@ import Submenu from "../db/models/Submenu";
 
 import Helper from "../helpers/Helper";
 import PasswordHelper from "../helpers/PasswordHelper";
+import { verifyGoogleToken } from "../helpers/GoogleHelper";
 
 const Register = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -67,31 +68,31 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
         });
 
         const roleAccess = await RoleMenuAccess.findAll({
-			where: {
-				roleId: user.roleId,
-				isActive: true
-			}
-		});
+            where: {
+                roleId: user.roleId,
+                isActive: true
+            }
+        });
 
-		const listSubmenuId = roleAccess.map((item) => {
-			return item.submenuId
-		});
+        const listSubmenuId = roleAccess.map((item) => {
+            return item.submenuId
+        });
 
-		const menuAccess = await MasterMenu.findAll({
-			where: {
-				isActive: true
-			},
-			order: [
-				['ordering', 'ASC'],
-				[Submenu, 'ordering', 'ASC']
-			],
-			include: {
-				model: Submenu,
-				where: {
-					id: { [Op.in]: listSubmenuId }
-				}
-			}
-		});
+        const menuAccess = await MasterMenu.findAll({
+            where: {
+                isActive: true
+            },
+            order: [
+                ['ordering', 'ASC'],
+                [Submenu, 'ordering', 'ASC']
+            ],
+            include: {
+                model: Submenu,
+                where: {
+                    id: { [Op.in]: listSubmenuId }
+                }
+            }
+        });
 
         const responseUser = {
             id: user.id,
@@ -108,6 +109,34 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
 }
+
+const RegisterGoogle = async (req: Request, res: Response): Promise<Response> => {
+    try {
+
+        const verificationResponse = await verifyGoogleToken(req.body.credential);
+
+        if (verificationResponse.error) {
+            console.log('error', verificationResponse.error);
+            return res.status(400).json({
+                message: verificationResponse.error,
+            });
+        }
+        const profile = verificationResponse?.payload;
+
+        const user = await User.create({
+            name: profile?.name,
+            email: profile?.email,
+            active: true,
+            verified:true,
+            roleId:3,
+            password: await PasswordHelper.PasswordHashing('12345678')
+        })
+        return res.status(201).send(Helper.ResponseData(201, "Created", null, user));
+
+    } catch (error: any) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
 
 const RefreshToken = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -198,4 +227,4 @@ const UserLogout = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
-export default { Register, UserLogin, RefreshToken, UserDetail, UserLogout };
+export default { Register, UserLogin, RefreshToken, UserDetail, UserLogout, RegisterGoogle };

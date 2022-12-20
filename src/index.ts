@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import cookieParser from "cookie-parser";
-
+import cors from 'cors'
 import dotenv from "dotenv";
 import sequelizeConnection from "./config/dbConnect";
 
@@ -9,6 +9,7 @@ import router from "./routes/Routes";
 dotenv.config();
 
 const app = express();
+app.use(cors())
 app.use(express.json());
 app.use(cookieParser());
 
