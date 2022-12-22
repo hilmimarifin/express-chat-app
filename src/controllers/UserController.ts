@@ -127,17 +127,104 @@ const RegisterGoogle = async (req: Request, res: Response): Promise<Response> =>
             name: profile?.name,
             email: profile?.email,
             active: true,
-            verified:true,
-            roleId:3,
+            verified: true,
+            roleId: 3,
             password: await PasswordHelper.PasswordHashing('12345678')
         })
-        return res.status(201).send(Helper.ResponseData(201, "Created", null, user));
+        return res.status(201).send(Helper.ResponseData(201, "Created", null, {
+            firstName: profile?.given_name,
+            lastName: profile?.family_name,
+            picture: profile?.picture,
+            email: profile?.email,
+        }));
 
     } catch (error: any) {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
 };
 
+const UserLoginGoogle = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const verificationResponse = await verifyGoogleToken(req.body.credential);
+
+        if (verificationResponse.error) {
+            console.log('error', verificationResponse.error);
+            return res.status(400).json({
+                message: verificationResponse.error,
+            });
+        }
+
+        const profile = verificationResponse?.payload;
+        const user = await User.findOne({
+            where: {
+                email: profile?.email
+            }
+        });
+
+        if (!user) {
+            return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+        }
+
+        const dataUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            roleId: user.roleId,
+            verified: user.verified,
+            active: user.active
+        };
+        const token = Helper.GenerateToken(dataUser);
+        const refreshToken = Helper.GenerateRefreshToken(dataUser);
+
+        user.accessToken = refreshToken;
+        await user.save();
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
+        const roleAccess = await RoleMenuAccess.findAll({
+            where: {
+                roleId: user.roleId,
+                isActive: true
+            }
+        });
+
+        const listSubmenuId = roleAccess.map((item) => {
+            return item.submenuId
+        });
+
+        const menuAccess = await MasterMenu.findAll({
+            where: {
+                isActive: true
+            },
+            order: [
+                ['ordering', 'ASC'],
+                [Submenu, 'ordering', 'ASC']
+            ],
+            include: {
+                model: Submenu,
+                where: {
+                    id: { [Op.in]: listSubmenuId }
+                }
+            }
+        });
+
+        const responseUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            roleId: user.roleId,
+            verified: user.verified,
+            active: user.active,
+            token: token,
+            menuAccess: menuAccess
+        }
+        return res.status(200).send(Helper.ResponseData(200, "OK", null, responseUser));
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+}
 const RefreshToken = async (req: Request, res: Response): Promise<Response> => {
     try {
         const refreshToken = req.cookies?.refreshToken;
@@ -227,4 +314,4 @@ const UserLogout = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
-export default { Register, UserLogin, RefreshToken, UserDetail, UserLogout, RegisterGoogle };
+export default { Register, UserLogin, RefreshToken, UserDetail, UserLogout, RegisterGoogle, UserLoginGoogle };

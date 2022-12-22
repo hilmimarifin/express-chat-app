@@ -26,7 +26,7 @@ router.get("/user/refresh-token", UserController.RefreshToken);
 router.get("/user/current-user", Authorization.Authenticated, UserController.UserDetail);
 router.get("/user/logout", Authorization.Authenticated, UserController.UserLogout);
 router.post("/user/signup-google",UserController.RegisterGoogle);
-// router.post("/user/login-google", UserController.UserLoginGoogle);
+router.post("/user/login-google", UserController.UserLoginGoogle);
 
 
 // Master Menu Router
