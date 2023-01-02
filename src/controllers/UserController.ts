@@ -67,12 +67,14 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
             maxAge: 24 * 60 * 60 * 1000
         });
 
-        const roleAccess = await RoleMenuAccess.findAll({
-            where: {
-                roleId: user.roleId,
-                isActive: true
+        const roleAccess = await RoleMenuAccess.findAll(
+            {
+                where: {
+                    roleId: user.roleId,
+                    isActive: true
+                }
             }
-        });
+        );
 
         const listSubmenuId = roleAccess.map((item) => {
             return item.submenuId
