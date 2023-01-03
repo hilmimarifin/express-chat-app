@@ -8,7 +8,6 @@ const CreateMessage = async (req: Request, res: Response): Promise<Response> => 
         const { receiverId } = req.params
         const { text, senderId } = req.body;
         //todos
-        //1. add validation for empty message
         //2. sender id can be get from current user api not hardcode
 
         const message = await Message.create({ text, receiverId, senderId, hasSeen: false })

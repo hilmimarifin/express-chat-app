@@ -10,6 +10,7 @@ import UserValidation from "../middleware/validation/UserValidation";
 import Authorization from "../middleware/Authorization";
 import MenuValidation from "../middleware/validation/MenuValidation";
 import MessageController from "../controllers/MessageController";
+import MessageValidation from "../middleware/validation/MessageValidation";
 
 const router = express.Router();
 
@@ -57,7 +58,7 @@ router.patch("/role-menu-access/:id", MenuValidation.CreateRoleMenuAccess, Autho
 router.delete("/role-menu-access/:id", Authorization.Authenticated, Authorization.AdminRole, RoleMenuAccessController.SoftDelete);
 
 // Message router
-router.post("/message/:receiverId", Authorization.Authenticated, MessageController.CreateMessage);
+router.post("/message/:receiverId", Authorization.Authenticated,MessageValidation.CreateMessageValidation, MessageController.CreateMessage);
 router.post("/message/get/:receiverId", Authorization.Authenticated, MessageController.GetDetailMessage);
 router.get("/message/:senderId", Authorization.Authenticated, MessageController.GetListMessage);
 
