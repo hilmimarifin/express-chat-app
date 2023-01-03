@@ -59,8 +59,8 @@ router.delete("/role-menu-access/:id", Authorization.Authenticated, Authorizatio
 
 // Message router
 router.post("/message/:receiverId", Authorization.Authenticated,MessageValidation.CreateMessageValidation, MessageController.CreateMessage);
-router.post("/message/get/:receiverId", Authorization.Authenticated, MessageController.GetDetailMessage);
-router.get("/message/:senderId", Authorization.Authenticated, MessageController.GetListMessage);
+router.get("/message/:receiverId", Authorization.Authenticated, MessageController.GetDetailMessage);
+router.get("/messages", Authorization.Authenticated, MessageController.GetListMessage);
 
 
 

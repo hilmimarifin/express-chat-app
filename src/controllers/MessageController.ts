@@ -6,11 +6,16 @@ import { Op } from "sequelize"
 const CreateMessage = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { receiverId } = req.params
-        const { text, senderId } = req.body;
-        //todos
-        //2. sender id can be get from current user api not hardcode
+        const { text } = req.body;
+        const refreshToken = req.cookies?.refreshToken
 
-        const message = await Message.create({ text, receiverId, senderId, hasSeen: false })
+        if (!refreshToken) {
+            return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+        }
+
+        const decodedUser = Helper.ExtractRefreshToken(refreshToken);
+
+        const message = await Message.create({ text, receiverId, senderId: decodedUser?.id, hasSeen: false })
 
         return res.status(201).send(Helper.ResponseData(201, "Created", null, message));
     } catch (error: any) {
@@ -20,11 +25,15 @@ const CreateMessage = async (req: Request, res: Response): Promise<Response> => 
 
 const GetDetailMessage = async (req: Request, res: Response): Promise<Response> => {
     try {
-        //todos
-        //1. sender id can be get from current user api not hardcode
-
         const { receiverId } = req.params
-        const { senderId } = req.body;
+        const refreshToken = req.cookies?.refreshToken
+
+        if (!refreshToken) {
+            return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+        }
+
+        const decodedUser = Helper.ExtractRefreshToken(refreshToken);
+        const senderId = decodedUser?.id
 
         const message = await Message.findAll({
             where: {
@@ -43,8 +52,14 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
         //todos
         //1. Order for last message to show in the list
         //2. unread count
+        const refreshToken = req.cookies?.refreshToken
 
-        const { senderId } = req.params;
+        if (!refreshToken) {
+            return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+        }
+
+        const decodedUser = Helper.ExtractRefreshToken(refreshToken);
+        const senderId = decodedUser?.id
 
         const message = await Message.findAll({
             where: {
