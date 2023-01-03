@@ -17,7 +17,7 @@ module.exports = {
           updatedAt: new Date(),
         },
         {
-          roleName: "Admin 1",
+          roleName: "Admin",
           active: true,
           createdAt: new Date(),
           updatedAt: new Date(),
