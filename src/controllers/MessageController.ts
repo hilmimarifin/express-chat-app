@@ -59,8 +59,6 @@ const GetDetailMessage = async (req: Request, res: Response): Promise<Response> 
 
 const GetListMessage = async (req: Request, res: Response): Promise<Response> => {
     try {
-        //todos
-        //2. unread count
         const refreshToken = req.cookies?.refreshToken
 
         if (!refreshToken) {
@@ -69,53 +67,32 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
 
         const decodedUser = Helper.ExtractRefreshToken(refreshToken);
         const senderId = decodedUser?.id
-        const messages = await Message.findAll({
-            attributes: ["id", [Sequelize.fn('MAX', Sequelize.col('text')), 'text'], "senderId", "receiverId", "createdAt"],
-            where: {
-                [Op.or]: [{ receiverId: senderId }, { senderId }]
-            },
-            group: ["receiverId", "senderId"],
-            raw: true
+       
+        const listReceiver = await Message.findAll({
+            attributes: ["id", "senderId"],
+            where: { receiverId: senderId }
         })
-        const combineMessage = (messagesParams: any) => {
-            const combined: any = []
-            messagesParams.forEach((message: any) => {
-                messagesParams.forEach((matcher: any) => {
-                    if (message.senderId === matcher.receiverId && message.receiverId === matcher.senderId) {
-                        combined.push([message, matcher])
-                    }
-                })
-            })
-            return combined
-        }
-        const getLatestMessage = (messageParams: any[]) => {
-            return messageParams.map((message: any[]) => {
-                return message.reduce((result: any, current: any) => {
-                    const da = new Date(result?.createdAt)
-                    const db = new Date(current?.createdAt)
-                    return (da > db ? result : current)
-                })
-            })
-        }
-        const removeDuplicateMessage = (messageParams: any[]) => {
-            return messageParams.reduce((result: any[], current) => {
-                let found = false;
-                for (let i = 0; i < result.length; i++) {
-                   if (result[i].id === current.id) {
-                      found = true;
-                   };
-                }
-                if (!found) {
-                   result.push(current);
-                }
-                return result;
-            }, [])
-        }
 
-        const combinedMessage = combineMessage(messages)
-        const latestMessage = getLatestMessage(combinedMessage)
-        const finalMessage = removeDuplicateMessage(latestMessage)
-        return res.status(201).send(Helper.ResponseData(201, "Success", null, finalMessage));
+        const listReceiverId = listReceiver.filter((value: any, index, arr: any) => arr.findIndex((v: any) => v.senderId === value.senderId) === index).map((id: any) => id.senderId)
+        const listMessage = await Promise.all(listReceiverId.map((value: any) => Message.findAll({
+            limit: 1,
+            where: {
+                [Op.or]: [{ receiverId: value, senderId }, { receiverId: senderId, senderId: value }],
+            },
+            order: [["createdAt", "DESC"]],
+            raw: true
+        })))
+        const listMessages = listMessage.flat(1)
+
+        const listUnread = await Promise.all(listReceiverId.map((receiverId: any) => Message.count({
+            where: {
+                [Op.and]: [{ hasSeen: false }, { receiverId: senderId, senderId: receiverId }]
+            },
+        })))
+
+        const messagesWithUnread = listMessages.map((message: any, index) => ({ ...message, unread: listUnread[index] }))
+
+        return res.status(201).send(Helper.ResponseData(201, "Success", null, messagesWithUnread));
     } catch (error: any) {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
