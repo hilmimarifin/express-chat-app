@@ -8,10 +8,15 @@ const CreateMessage = async (req: Request, res: Response): Promise<Response> => 
     try {
         const { receiverId } = req.params
         const { text } = req.body;
-        const refreshToken = req.cookies?.refreshToken
 
+        const refreshToken = req.cookies?.refreshToken
         if (!refreshToken) {
             return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+        }
+
+        const user = await User.findByPk(receiverId)        
+        if (!user) {
+            return res.status(401).send(Helper.ResponseData(401, "User doesnt exist", null, null));
         }
 
         const decodedUser = Helper.ExtractRefreshToken(refreshToken);
@@ -27,10 +32,15 @@ const CreateMessage = async (req: Request, res: Response): Promise<Response> => 
 const GetDetailMessage = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { receiverId } = req.params
+        
         const refreshToken = req.cookies?.refreshToken
-
         if (!refreshToken) {
             return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+        }
+
+        const user = await User.findByPk(receiverId)        
+        if (!user) {
+            return res.status(401).send(Helper.ResponseData(401, "User doesnt exist", null, null));
         }
 
         const decodedUser = Helper.ExtractRefreshToken(refreshToken);
