@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import connection from "../../config/dbConnect";
+import User from "./User";
 
 interface MessageAttributes {
   id?: number,
@@ -53,5 +54,8 @@ Message.init({
   sequelize: connection,
   underscored: false
 });
+
+Message.belongsTo(User, { foreignKey: "senderId"})
+Message.belongsTo(User, { foreignKey: "receiverId"})
 
 export default Message;  

@@ -2,6 +2,7 @@ import { Request, Response, raw } from "express";
 import Message from "../db/models/Message";
 import Helper from "../helpers/Helper";
 import { Op, Sequelize } from "sequelize"
+import User from "../db/models/User";
 
 const CreateMessage = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -38,16 +39,22 @@ const GetDetailMessage = async (req: Request, res: Response): Promise<Response> 
         const messages = await Message.findAll({
             where: {
                 [Op.or]: [{ receiverId, senderId }, { receiverId: senderId, senderId: receiverId }],
-            }
+            },
         })
         const ids = messages.map(message => message.id)
 
         await Message.update({ hasSeen: true }, { where: { id: ids } })
 
         const updatedMessages = await Message.findAll({
+            attributes:["text", "createdAt"],
             where: {
                 [Op.or]: [{ receiverId, senderId }, { receiverId: senderId, senderId: receiverId }],
-            }
+            },
+            include:{
+                model: User,
+                attributes: ["name"]
+            },
+            raw:true
         })
 
 
@@ -70,16 +77,21 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
        
         const listReceiver = await Message.findAll({
             attributes: ["id", "senderId"],
-            where: { receiverId: senderId }
+            where: { receiverId: senderId },
         })
 
         const listReceiverId = listReceiver.filter((value: any, index, arr: any) => arr.findIndex((v: any) => v.senderId === value.senderId) === index).map((id: any) => id.senderId)
         const listMessage = await Promise.all(listReceiverId.map((value: any) => Message.findAll({
+            attributes: ["text", "createdAt"],
             limit: 1,
             where: {
                 [Op.or]: [{ receiverId: value, senderId }, { receiverId: senderId, senderId: value }],
             },
             order: [["createdAt", "DESC"]],
+            include: {
+                model: User,
+                attributes: ["name"]
+            },
             raw: true
         })))
         const listMessages = listMessage.flat(1)
