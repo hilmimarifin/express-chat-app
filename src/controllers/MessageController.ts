@@ -14,7 +14,7 @@ const CreateMessage = async (req: Request, res: Response): Promise<Response> => 
             return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
         }
 
-        const user = await User.findByPk(receiverId)        
+        const user = await User.findByPk(receiverId)
         if (!user) {
             return res.status(401).send(Helper.ResponseData(401, "User doesnt exist", null, null));
         }
@@ -32,13 +32,13 @@ const CreateMessage = async (req: Request, res: Response): Promise<Response> => 
 const GetDetailMessage = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { receiverId } = req.params
-        
+
         const refreshToken = req.cookies?.refreshToken
         if (!refreshToken) {
             return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
         }
 
-        const user = await User.findByPk(receiverId)        
+        const user = await User.findByPk(receiverId)
         if (!user) {
             return res.status(401).send(Helper.ResponseData(401, "User doesnt exist", null, null));
         }
@@ -56,15 +56,16 @@ const GetDetailMessage = async (req: Request, res: Response): Promise<Response> 
         await Message.update({ hasSeen: true }, { where: { id: ids } })
 
         const updatedMessages = await Message.findAll({
-            attributes:["text", "createdAt"],
+            attributes: ["text", "createdAt"],
             where: {
                 [Op.or]: [{ receiverId, senderId }, { receiverId: senderId, senderId: receiverId }],
             },
-            include:{
+            include: {
                 model: User,
-                attributes: ["name"]
+                attributes: ["name"],
+                foreignKey: "senderId"
             },
-            raw:true
+            raw: true
         })
 
 
@@ -84,7 +85,7 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
 
         const decodedUser = Helper.ExtractRefreshToken(refreshToken);
         const senderId = decodedUser?.id
-       
+
         const listReceiver = await Message.findAll({
             attributes: ["id", "senderId"],
             where: { receiverId: senderId },
@@ -92,7 +93,17 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
 
         const listReceiverId = listReceiver.filter((value: any, index, arr: any) => arr.findIndex((v: any) => v.senderId === value.senderId) === index).map((id: any) => id.senderId)
         const listMessage = await Promise.all(listReceiverId.map((value: any) => Message.findAll({
-            attributes: ["text", "createdAt"],
+            attributes: ["text", "createdAt", "receiverId", "senderId"],
+            limit: 1,
+            where: {
+                [Op.or]: [{ receiverId: value, senderId }, { receiverId: senderId, senderId: value }],
+            },
+            order: [["createdAt", "DESC"]],
+            raw: true
+        })))
+        const listMessages: any = listMessage.flat(1)
+        const listReceiverName: any = await Promise.all(listReceiverId.map((value: any, index) => Message.findAll({
+            attributes: ["id"],
             limit: 1,
             where: {
                 [Op.or]: [{ receiverId: value, senderId }, { receiverId: senderId, senderId: value }],
@@ -100,11 +111,12 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
             order: [["createdAt", "DESC"]],
             include: {
                 model: User,
-                attributes: ["name"]
+                as: `${listMessages[index].senderId === senderId ? "receiverUser" : "senderUser"}`,
+                foreignKey: `${listMessages[index].senderId === senderId ? "receiverId" : "sernderId"}`,
+                attributes: ["name"],
             },
-            raw: true
         })))
-        const listMessages = listMessage.flat(1)
+        console.log("LIST RECEIVER NAME >>>>>>>>>>", listReceiverName);
 
         const listUnread = await Promise.all(listReceiverId.map((receiverId: any) => Message.count({
             where: {
@@ -112,7 +124,7 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
             },
         })))
 
-        const messagesWithUnread = listMessages.map((message: any, index) => ({ ...message, unread: listUnread[index] }))
+        const messagesWithUnread = listMessages.map((message: any, index: any) => ({ ...message, unread: listUnread[index], name: listReceiverName[index][0][message.senderId === senderId ? "receiverUser" : "senderUser"].name }))
 
         return res.status(201).send(Helper.ResponseData(201, "Success", null, messagesWithUnread));
     } catch (error: any) {

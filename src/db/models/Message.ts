@@ -55,7 +55,7 @@ Message.init({
   underscored: false
 });
 
-Message.belongsTo(User, { foreignKey: "senderId"})
-Message.belongsTo(User, { foreignKey: "receiverId"})
+Message.belongsTo(User, { foreignKey: "senderId", as: "senderUser"})
+Message.belongsTo(User, { foreignKey: "receiverId", as: "receiverUser"})
 
 export default Message;  
