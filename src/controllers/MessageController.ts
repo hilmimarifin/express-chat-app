@@ -23,7 +23,7 @@ const CreateMessage = async (req: Request, res: Response): Promise<Response> => 
 
         const message = await Message.create({ text, receiverId, senderId: decodedUser?.id, hasSeen: false })
 
-        return res.status(201).send(Helper.ResponseData(201, "Created", null, message));
+        return res.status(201).send(Helper.ResponseData(201, "Sent", null, message));
     } catch (error: any) {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
@@ -62,6 +62,7 @@ const GetDetailMessage = async (req: Request, res: Response): Promise<Response> 
             },
             include: {
                 model: User,
+                as: "senderUser",
                 attributes: ["name"],
                 foreignKey: "senderId"
             },
@@ -113,18 +114,19 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
                 model: User,
                 as: `${listMessages[index].senderId === senderId ? "receiverUser" : "senderUser"}`,
                 foreignKey: `${listMessages[index].senderId === senderId ? "receiverId" : "sernderId"}`,
-                attributes: ["name"],
+                attributes: ["id", "name"],
             },
         })))
-        console.log("LIST RECEIVER NAME >>>>>>>>>>", listReceiverName);
-
         const listUnread = await Promise.all(listReceiverId.map((receiverId: any) => Message.count({
             where: {
                 [Op.and]: [{ hasSeen: false }, { receiverId: senderId, senderId: receiverId }]
             },
         })))
 
-        const messagesWithUnread = listMessages.map((message: any, index: any) => ({ ...message, unread: listUnread[index], name: listReceiverName[index][0][message.senderId === senderId ? "receiverUser" : "senderUser"].name }))
+        const messagesWithUnread = listMessages.map((message: any, index: any) => {
+            const receiver = listReceiverName[index][0][message.senderId === senderId ? "receiverUser" : "senderUser"]
+            return {receiverName: receiver.name, receiverId: receiver.id, text: message.text, createdAt: message.createdAt, unread: listUnread[index] }
+        })
 
         return res.status(201).send(Helper.ResponseData(201, "Success", null, messagesWithUnread));
     } catch (error: any) {
