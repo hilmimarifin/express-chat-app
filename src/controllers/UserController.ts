@@ -236,7 +236,6 @@ const RefreshToken = async (req: Request, res: Response): Promise<Response> => {
         }
 
         const decodedUser = Helper.ExtractRefreshToken(refreshToken);
-        console.log(decodedUser);
         if (!decodedUser) {
             return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
         }
@@ -297,6 +296,7 @@ const UserLogout = async (req: Request, res: Response): Promise<Response> => {
             return res.status(200).send(Helper.ResponseData(200, "User logout", null, null));
         }
         const email = res.locals.userEmail;
+        
         const user = await User.findOne({
             where: {
                 email: email

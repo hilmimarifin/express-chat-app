@@ -55,7 +55,7 @@ const GetDetailMessage = async (req: Request, res: Response): Promise<Response> 
 
         await Message.update({ hasSeen: true }, { where: { id: ids } })
 
-        const updatedMessages = await Message.findAll({
+        const updatedMessages : any = await Message.findAll({
             attributes: ["text", "createdAt"],
             where: {
                 [Op.or]: [{ receiverId, senderId }, { receiverId: senderId, senderId: receiverId }],
@@ -63,14 +63,21 @@ const GetDetailMessage = async (req: Request, res: Response): Promise<Response> 
             include: {
                 model: User,
                 as: "senderUser",
-                attributes: ["name"],
+                attributes: ["name", "id"],
                 foreignKey: "senderId"
             },
             raw: true
         })
 
+        const response = updatedMessages.map((message: any) => ({
+            senderName: message["senderUser.name"],
+            senderId: message["senderUser.id"],
+            text: message.text,
+            createdAt: message.createdAt,
+        }))
 
-        return res.status(201).send(Helper.ResponseData(201, "Success", null, updatedMessages));
+
+        return res.status(201).send(Helper.ResponseData(201, "Success", null, response));
     } catch (error: any) {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
@@ -81,7 +88,7 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
         const refreshToken = req.cookies?.refreshToken
 
         if (!refreshToken) {
-            return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+            return res.status(401).send(Helper.ResponseData(401, "token not found", null, null));
         }
 
         const decodedUser = Helper.ExtractRefreshToken(refreshToken);
@@ -103,6 +110,7 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
             raw: true
         })))
         const listMessages: any = listMessage.flat(1)
+        
         const listReceiverName: any = await Promise.all(listReceiverId.map((value: any, index) => Message.findAll({
             attributes: ["id"],
             limit: 1,
@@ -127,7 +135,7 @@ const GetListMessage = async (req: Request, res: Response): Promise<Response> =>
             const receiver = listReceiverName[index][0][message.senderId === senderId ? "receiverUser" : "senderUser"]
             return {receiverName: receiver.name, receiverId: receiver.id, text: message.text, createdAt: message.createdAt, unread: listUnread[index] }
         })
-
+        
         return res.status(201).send(Helper.ResponseData(201, "Success", null, messagesWithUnread));
     } catch (error: any) {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
